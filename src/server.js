@@ -1,16 +1,18 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import productRoutes from './routes/productRoutes.js';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
+const BASE_URL = process.env.BASE_URL;
 
 // Middleware
-app.use(cors());
+app.use(cors());//Lägga till begränsingar
 app.use(express.json());
+app.use(express.static('public'));
 
 // Routes
 app.use('/api', productRoutes);
@@ -28,6 +30,6 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 API available at http://localhost:${PORT}/api`);
+    console.log(`🚀 Server running on ${BASE_URL}`);
+    console.log(`📊 API available at ${BASE_URL}/api`);
 });
