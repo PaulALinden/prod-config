@@ -1,23 +1,22 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import productRoutes from './routes/productRoutes.js';
 import Stripe from 'stripe';
 
-
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT;
 const BASE_URL = process.env.BASE_URL;
+const APP_URL = process.env.APP_URL;
+const WIDGET_URL = process.env.WIDGET_URL;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const YOUR_DOMAIN = 'http://localhost:5173'; // Updated to match Vite’s default port
+
 // Middleware
 
 app.use(express.json());
 app.use(express.static('public'));
 app.use(cors({
-    origin: YOUR_DOMAIN, // Allow requests from your React app
+    origin:[APP_URL,WIDGET_URL,]// Allow requests from your React app
 }));
 
 // Routes
@@ -53,8 +52,7 @@ app.post('/create-checkout-session', async (req, res) => {
                 },
             ],
             mode: 'payment',
-            success_url: 'http://localhost:5173/success',
-            cancel_url: 'http://localhost:5173/',
+            cancel_url: APP_URL || WIDGET_URL, //Lägg till för preview 8080
         });
 
         res.json({ url: session.url });
@@ -68,4 +66,6 @@ app.post('/create-checkout-session', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`🚀 Server running on ${PORT}`);
     console.log(`📊 API available at ${BASE_URL}/api`);
+    console.log(`📊 Client app at ${APP_URL}`);
+    console.log(`📊 Client widget at ${WIDGET_URL}`);
 });
