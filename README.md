@@ -10,9 +10,21 @@ Lättvikts Node/Express-service för att hämta butikskonfiguration från WooCom
 npm install
 ```
 
-2. Kör i utveckling:
+# Prod-config
+
+Lättvikts Node/Express-service för att hämta butikskonfiguration från WooCommerce och räkna pris för glasögonkomponenter (glas, toning, båge).
+
+## Snabbstart
+
+1. Installera beroenden:
 
 ```sh
+npm install
+```
+
+2. Kör i utveckling (Windows cmd.exe):
+
+```cmd
 npm run dev
 ```
 
@@ -22,86 +34,138 @@ npm run dev
 npm start
 ```
 
-## Miljövariabler
+Rekommenderad Node-version: 18.x eller nyare.
 
-Skapa en .env i projektroten med minst följande variabler:
+## Exempel på .env (lägg INTE in riktiga nycklar här)
 
-PORT
-BASE_URL
-APP_URL
-WIDGET_URL
-STRIPE_SECRET_KEY
-MALMO_URL
-WC_MALMO_KEY
-WC_MALMO_SECRET
-MARBELLA_URL
-WC_MARBELLA_KEY
-WC_MARBELLA_SECRET
-(.env bör ligga i .gitignore)
+Skapa en `.env` i projektroten med minst följande variabler:
+
+```properties
+PORT=3001
+BASE_URL=http://localhost:3001
+APP_URL=http://localhost:5173
+MALMO_URL=http://shop-malmo.local
+MARBELLA_URL=http://shop-marbella.local
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_xxx
+
+# Malmö (WooCommerce)
+WC_MALMO_KEY=ck_xxx
+WC_MALMO_SECRET=cs_xxx
+
+# Marbella (WooCommerce)
+WC_MARBELLA_KEY=ck_xxx
+WC_MARBELLA_SECRET=cs_xxx
+```
+
+Se `.env.example` i repo (om du vill skapa en) för en mall. Lägg `.env` i `.gitignore`.
 
 ## Entrypoint
 
-Servern startas från src/server.js.
+Servern startas från `src/server.js`.
 
-## API
+## API — snabba exempel
 
-```js
-GET '/api/stores/:storeId/config'
+- GET `/api/stores/:storeId/config`
+ 	- Exempel: `GET /api/stores/store_malmo/config`
+ 	- Returnerar butikens currency, defaults (taxPercent, shipping) och arrays `glassTypes`, `tints`, `frames`.
+
+ Svar (förenklat):
+
+```json
+{
+ "storeId":"store_malmo",
+ "currency":"SEK",
+ "defaults":{"taxPercent":25,"shipping":49},
+ "glassTypes":[{"id":123,"name":"Standard","price":499}],
+ "tints":[],
+ "frames":[]
+}
 ```
 
-Hämtar butikskonfiguration (kategorier, produkter, valuta, moms, frakt).
+- POST `/api/calculate-price`
+ 	- Payload-exempel (`application/json`):
 
-```js
-POST '/api/calculate-price'
+```json
+{
+ "storeId":"store_malmo",
+ "selections":{
+  "glassType":123,
+  "tint":456,
+  "frame":789
+ }
+}
 ```
 
-Beräknar pris baserat på användarens val (glassType, tint, frame). Returnerar basePrice, tax, shipping, total, currency.
+ - Svar (förenklat):
 
-```js
-POST '/api/upload/prescription'
+```json
+{
+ "basePrice":900,
+ "tax":225,
+ "taxPercent":25,
+ "shipping":49,
+ "total":1174,
+ "currency":"SEK"
+}
 ```
 
-Tar emot filuppladdning (PDF/JPG/PNG). Sparas i uploads/.
-
-Stripe checkout: endpoint /create-checkout-session i src/server.js.
+Fältet `selections` använder produkt-id (som finns i `glassTypes`, `tints`, `frames`). Modellen normaliserar kategorier och produktfält via `Product.fromWooCommerce`.
 
 ## Datamodeller
 
-src/models/category.js — Category.fromWooCommerce för att normalisera kategoriobjekt.
-src/models/product.js — Product.fromWooCommerce normaliserar priser, bilder och kategorier.
+- `src/models/category.js` — `Category.fromWooCommerce(wcCategory)`
+- `src/models/product.js` — `Product.fromWooCommerce(wcProduct)` (normaliserar priser, bilder och categories)
 
-Att ha modeller ger:
+Att använda modeller ger:
 
-Konsistent shape i appen
-Enkel parsing/validering (t.ex. pris som number)
-Centraliserad mapping från WooCommerce-format
+- Konsistent shape i hela appen
+- Centraliserad parsing/validering (t.ex. säker pris-parse från sträng)
+- Lättare testning och återanvändning
 
-## Viktiga filer
+## Viktiga filer och vad de gör
 
-src/server.js — startpunkt
-src/routes/productRoutes.js — produktrelaterade endpoints
-src/controllers/productController.js — controller-logik
-src/services/woocommerceService.js — hämtning från WooCommerce & prislogik
-src/models/product.js, src/models/category.js — datamodeller
-src/utils/utils.js — hjälpfunktioner (t.ex. stripPTags)
-uploads/ — sparar uppladdade filer (ej i repo)
+- `src/server.js` — startpunkt och Stripe endpoint
+- `src/routes/productRoutes.js` — produktrelaterade endpoints
+- `src/routes/uploadRoutes.js` — filuppladdningar
+- `src/controllers/productController.js` — hanterar requests och anropar tjänster
+- `src/services/woocommerceService.js` — hämtar data från WooCommerce (OAuth) och innehåller `calculatePrice`
+- `src/models/product.js`, `src/models/category.js` — datamodeller
+- `src/utils/utils.js` — hjälpfunktioner (t.ex. `stripPTags`)
 
-## Hur priset räknas
+## Uppladdningar
 
-Prislogiken summerar valda komponenters priser (glas, toning, båge) från butikskonfigurationen, beräknar moms enligt taxPercent och lägger till frakt enligt shipping. Se WooCommerceService.calculatePrice.
+Uppladdade filer sparas i `uploads/` (mappen ignoreras normalt i git). Se `src/routes/uploadRoutes.js` för validering och lagring.
 
-## Tips för utveckling
+## Felsökning — vanliga problem
 
-Använd npm run dev (nodemon) för snabb utveckling.
-Sätt riktiga WooCommerce-nycklar i miljövariabler för att testa mot butiker.
-Mocka API-svar eller använd sample-data under src/data/ vid enhetstester.
-Normalisera kategorier i Product-modellen så filter blir stabilt (slug/id).
+- OAuth-signering misslyckas:
+ 	- Kontrollera att `WC_*_KEY` och `WC_*_SECRET` är korrekta.
+ 	- Se till att butikens URL är korrekt och att REST API `/wp-json/wc/v3` är tillgängligt.
+ 	- Klocksynkronisering kan påverka OAuth-signering — kontrollera serverns tid.
 
-## Felsökning
+- Tomma produktlistor eller saknade fält:
+ 	- Din WooCommerce-installation kan returnera olika strukturer; `Product.fromWooCommerce` normaliserar detta.
 
-Kontrollera att .env-variabler är korrekta och att URL:erna pekar mot WP REST API (/wp-json/wc/v3).
-Om OAuth-signering misslyckas: dubbelkolla nyckel/secret och att klockan är rätt på servern.
+## Utvecklingstips
+
+- Använd `npm run dev` (nodemon) för snabbare iteration.
+- Mocka WooCommerce-svar i `src/data/` för enhets- eller integrationstester.
+- Lägg till `README`-sektion för hur man kör tester om du skriver testsviter.
+
+## Contributing
+
+Om du vill bidra:
+
+1. Forka projektet
+2. Skapa en feature-branch
+3. Gör ändringar och öppna en PR med tydlig beskrivning
 
 ## Licens
 
-Ingen licens specificerad — lägg till en LICENSE-fil om projektet ska delas.
+Ingen licens specificerad. Lägg till en `LICENSE`-fil om du vill publicera koden.
+
+---
+
+Ändringarna är sparade i denna fil. Vill du att jag även skapar en `.env.example`-fil eller lägger till en kort `CHANGELOG.md`?
