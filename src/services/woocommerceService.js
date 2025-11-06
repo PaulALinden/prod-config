@@ -8,7 +8,7 @@ import { stripPTags } from '../utils/utils.js';
 
 
 const STORES = {
-    store_1: {
+    store_malmo: {
         url: process.env.MALMO_URL,
         key: process.env.WC_MALMO_KEY,
         secret: process.env.WC_MALMO_SECRET,
@@ -16,7 +16,7 @@ const STORES = {
         taxPercent: 25,
         shipping: 49
     },
-    store_2: {
+    store_marbella: {
         url: process.env.MARBELLA_URL,
         key: process.env.WC_MARBELLA_KEY,
         secret: process.env.WC_MARBELLA_SECRET,
