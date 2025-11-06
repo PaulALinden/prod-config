@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import productRoutes from './routes/productRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 import Stripe from 'stripe';
 
 const app = express();
@@ -48,10 +49,11 @@ app.post('/create-checkout-session', async (req, res) => {
                         },
                         unit_amount: Math.round(pricing.total * 100),
                     },
-                    quantity: 1,
+                    quantity: 1,//Endast vid test, vill man ha flera sen?
                 },
             ],
             mode: 'payment',
+            success_url: `${APP_URL}/success` || `${WIDGET_URL}/success`,
             cancel_url: APP_URL || WIDGET_URL, //Lägg till för preview 8080
         });
 
@@ -61,6 +63,8 @@ app.post('/create-checkout-session', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.use('/api/upload', uploadRoutes);
 
 // Start server
 app.listen(PORT, () => {
