@@ -131,6 +131,7 @@ Att använda modeller ger:
 - `src/routes/uploadRoutes.js` — filuppladdningar
 - `src/controllers/productController.js` — hanterar requests och anropar tjänster
 - `src/services/woocommerceService.js` — hämtar data från WooCommerce (OAuth) och innehåller `calculatePrice`
+- `src/controllers/checkoutController.js` — Stripe checkout och betalningslogik
 - `src/models/product.js`, `src/models/category.js` — datamodeller
 - `src/utils/utils.js` — hjälpfunktioner (t.ex. `stripPTags`)
 
