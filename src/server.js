@@ -3,23 +3,24 @@ import express from 'express';
 import cors from 'cors';
 import productRoutes from './routes/productRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
-import Stripe from 'stripe';
+import checkoutRoutes from './routes/checkoutRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT;
 const BASE_URL = process.env.BASE_URL;
 const APP_URL = process.env.APP_URL;
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Middleware
 app.use(express.json());
 app.use(express.static('public'));
 app.use(cors({
-    origin:[APP_URL,]// Allow requests from your React app
+    origin: [APP_URL,] // Allow requests from your React app
 }));
 
 // Routes
 app.use('/api', productRoutes);
+app.use('/api/checkout', checkoutRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -31,38 +32,6 @@ app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ success: false, error: 'Internal server error' });
 });
-
-app.post('/create-checkout-session', async (req, res) => {
-    try {
-        const { selections, pricing, config } = req.body;
-
-        const session = await stripe.checkout.sessions.create({
-            line_items: [
-                {
-                    price_data: {
-                        currency: config.currency.toLowerCase(),
-                        product_data: {
-                            name: `Glasögon - ${config.glassTypes.find(g => g.id === selections.glassType)?.name}`,
-                            description: `Toning: ${config.tints.find(t => t.id === selections.tint)?.name}, Båge: ${config.frames.find(f => f.id === selections.frame)?.name}`,
-                        },
-                        unit_amount: Math.round(pricing.total * 100),
-                    },
-                    quantity: 1,//Endast vid test, vill man ha flera sen?
-                },
-            ],
-            mode: 'payment',
-            success_url: `${APP_URL}/success`,
-            cancel_url: APP_URL, //Lägg till för preview 8080
-        });
-
-        res.json({ url: session.url });
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.use('/api/upload', uploadRoutes);
 
 // Start server
 app.listen(PORT, () => {
