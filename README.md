@@ -10,25 +10,13 @@ Lättvikts Node/Express-service för att hämta butikskonfiguration från WooCom
 npm install
 ```
 
-# Prod-config
-
-Lättvikts Node/Express-service för att hämta butikskonfiguration från WooCommerce och räkna pris för glasögonkomponenter (glas, toning, båge).
-
-## Snabbstart
-
-1. Installera beroenden:
-
-```sh
-npm install
-```
-
-2. Kör i utveckling (Windows cmd.exe):
+1. Kör i utveckling (Windows cmd.exe):
 
 ```cmd
 npm run dev
 ```
 
-3. Starta i produktion:
+1. Starta i produktion:
 
 ```sh
 npm start
@@ -68,10 +56,10 @@ Servern startas från `src/server.js`.
 ## API — snabba exempel
 
 - GET `/api/stores/:storeId/config`
- 	- Exempel: `GET /api/stores/store_malmo/config`
- 	- Returnerar butikens currency, defaults (taxPercent, shipping) och arrays `glassTypes`, `tints`, `frames`.
+  - Exempel: `GET /api/stores/store_malmo/config`
+  - Returnerar butikens currency, defaults (taxPercent, shipping) och arrays `glassTypes`, `tints`, `frames`.
 
- Svar (förenklat):
+Svar (förenklat):
 
 ```json
 {
@@ -85,7 +73,7 @@ Servern startas från `src/server.js`.
 ```
 
 - POST `/api/calculate-price`
- 	- Payload-exempel (`application/json`):
+  - Payload-exempel (`application/json`):
 
 ```json
 {
@@ -98,16 +86,16 @@ Servern startas från `src/server.js`.
 }
 ```
 
- - Svar (förenklat):
+- Svar (förenklat):
 
 ```json
 {
- "basePrice":900,
- "tax":225,
- "taxPercent":25,
- "shipping":49,
- "total":1174,
- "currency":"SEK"
+    "basePrice": 0,
+    "tax": 0,
+    "taxPercent": 25,
+    "shipping": 49,
+    "total": 49,
+    "currency": "SEK"
 }
 ```
 
@@ -153,6 +141,16 @@ Viktigt: för att tjänsten ska kunna gruppera och hitta produkter för varje ko
 
 När du importerar CSV:en, se till att kategorikolumnen använder dessa slugs eller namn så att `Product.fromWooCommerce` / filtrering i `woocommerceService` kan matcha produkterna korrekt.
 
+### Lokalt (LocalWP)
+
+Kort om hur jag brukar sätta upp det lokalt:
+
+1. Skapa två WordPress/WooCommerce-sites i LocalWP med hosts som matchar `.env` (exempel: `shop-malmo.local` och `shop-marbella.local`).
+2. I respektive site importerar du motsvarande CSV från `src/data/` så du snabbt får in produktstrukturen i bulk.
+3. Skapa kategorierna i varje store: `glass`, `tint`, `frame` (se till att slugs matchar) — dessa används av tjänsten för att gruppera produkter till `glassTypes`, `tints` och `frames`.
+
+Detta gör det snabbt att testa prislogik och checkout mot två separata butiker lokalt.
+
 ## Uppladdningar
 
 Uppladdade filer sparas i `uploads/` (mappen ignoreras normalt i git). Se `src/routes/uploadRoutes.js` för validering och lagring.
@@ -160,9 +158,19 @@ Uppladdade filer sparas i `uploads/` (mappen ignoreras normalt i git). Se `src/r
 ## Felsökning — vanliga problem
 
 - OAuth-signering misslyckas:
- 	- Kontrollera att `WC_*_KEY` och `WC_*_SECRET` är korrekta.
- 	- Se till att butikens URL är korrekt och att REST API `/wp-json/wc/v3` är tillgängligt.
- 	- Klocksynkronisering kan påverka OAuth-signering — kontrollera serverns tid.
+  - Kontrollera att `WC_*_KEY` och `WC_*_SECRET` är korrekta.
+  - Se till att butikens URL är korrekt och att REST API `/wp-json/wc/v3` är tillgängligt.
+  - Klocksynkronisering kan påverka OAuth-signering — kontrollera serverns tid.
 
 - Tomma produktlistor eller saknade fält:
- 	- Din WooCommerce-installation kan returnera olika strukturer; `Product.fromWooCommerce` normaliserar detta.
+  - Din WooCommerce-installation kan returnera olika strukturer; `Product.fromWooCommerce` normaliserar detta.
+
+## Förbättringar / Roadmap
+
+Följande kortfattade förbättringar är bra nästa steg för att göra projektet mer robust och lättare att underhålla:
+
+- Validering & felhantering: Centralisera och standardisera felresponses så klienter får konsekventa felmeddelanden.
+- Tester: Lägg till enhets- och integrationstester för kärnlogik och API-endpoints.
+- Loggning: Inför strukturerad loggning och felspårning för enklare felsökning i produktion.
+- Säkerhet: Förbättra CORS, rate limiting, filuppladdningskontroller och hantering av hemligheter.
+- Robusthet: Implementera timeouts, retry/backoff och enkel caching för externa anrop (t.ex. WooCommerce).
