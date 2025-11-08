@@ -18,9 +18,11 @@ const uploadDir = process.env.UPLOAD_DIR
 try {
     fs.mkdirSync(uploadDir, { recursive: true });
     console.log(`Upload directory ensured: ${uploadDir}`);
-} catch (err) {
+}
+catch (err) {
     console.error('Could not create upload directory:', err);
 }
+
 
 // Konfigurera multer för filuppladdning
 const storage = multer.diskStorage({
