@@ -10,7 +10,7 @@ Lättvikts Node/Express-service för att hämta butikskonfiguration från WooCom
 npm install
 ```
 
-2. Kör i utveckling (Windows cmd.exe):
+2. Starta utvecklingsmiljö:
 
 ```cmd
 npm run dev
