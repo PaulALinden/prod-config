@@ -7,7 +7,6 @@ import checkoutRoutes from './routes/checkoutRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT;
-const BASE_URL = process.env.BASE_URL;
 const APP_URL = process.env.APP_URL;
 
 // Middleware
@@ -36,6 +35,5 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`🚀 Server running on ${PORT}`);
-    console.log(`📊 API available at ${BASE_URL}/api`);
     console.log(`📊 Client app at ${APP_URL}`);
 });
