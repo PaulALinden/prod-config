@@ -1,9 +1,11 @@
 import productService from '../services/woocommerceService.js';
 
+// Controller som hanterar HTTP-requests för produktrelaterade endpoints
+// - Anropar `productService` för business logic
 class ProductController {
-   
 
     // GET /api/stores/:storeId/config
+    // Returnerar butikens konfiguration: currency, defaults, glassTypes, tints, frames
     async getStoreConfig(req, res) {
         try {
             const { storeId } = req.params;
@@ -17,6 +19,8 @@ class ProductController {
     }
 
     // POST /api/calculate-price
+    // Body: { storeId, selections }
+    // selections: { glassType, tint, frame } (ids)
     async calculatePrice(req, res) {
         try {
             const { storeId, selections } = req.body;

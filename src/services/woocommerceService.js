@@ -1,4 +1,6 @@
-// backend/src/services/wooCommerceService.js
+// Service som ansvarar för att hämta och normalisera data från WooCommerce
+// - Hämtar kategorier och produkter via WooCommerce REST API (OAuth-signerade anrop)
+// - Exponerar enkla metoder för att bygga butikskonfiguration och räkna pris
 import axios from 'axios';
 import crypto from 'crypto';
 import OAuth from 'oauth-1.0a';
@@ -28,6 +30,7 @@ const STORES = {
 
 class WooCommerceService {
     createOAuth(store) {
+        // Skapar en OAuth-instans med HMAC-SHA1 som används för att signera WooCommerce-anrop
         return OAuth({
             consumer: {
                 key: store.key,
@@ -62,7 +65,7 @@ class WooCommerceService {
         const signedCategoriesUrl = `${baseUrl}/products/categories?${new URLSearchParams(categoriesUrl).toString()}`;
         const signedProductsUrl = `${baseUrl}/products?per_page=100&${new URLSearchParams(productsUrl).toString()}`;
 
-        // Hämta data parallellt
+        // Hämta data parallellt från WooCommerce (kategorier + produkter)
         const [categoriesRes, productsRes] = await Promise.all([
             axios.get(signedCategoriesUrl),
             axios.get(signedProductsUrl)
@@ -75,11 +78,13 @@ class WooCommerceService {
         const products = productsRes.data.map(prod => Product.fromWooCommerce(prod));
 
         // Gruppera produkter per kategori
+        // OBS: förväntar sig att `products` redan är normaliserade via Product.fromWooCommerce
         function mapProductsByCategory(products, category) {
             return products
                 .filter(p => p.categories.includes(category))
                 .map(p => ({
                     ...p,
+                    // Rensa <p>-taggar från beskrivningar för att undvika HTML i API-svaret
                     description: stripPTags(p.description || ''),
                     short_description: stripPTags(p.short_description || '')
                 }));
@@ -106,6 +111,7 @@ class WooCommerceService {
     calculatePrice(storeConfig, selections) {
         let basePrice = 0;
 
+        // Summera valda komponenters pris (om de finns i butikskonfigurationen)
         if (selections.glassType) {
             const glass = storeConfig.glassTypes.find(g => g.id === selections.glassType);
             if (glass) basePrice += glass.price;
@@ -121,8 +127,9 @@ class WooCommerceService {
             if (frame) basePrice += frame.price;
         }
         console.log(storeConfig)
-        const tax = basePrice * (storeConfig.defaults.taxPercent / 100);
-        const total = basePrice + tax + storeConfig.defaults.shipping;
+    // Beräkna moms och total (inkl. frakt)
+    const tax = basePrice * (storeConfig.defaults.taxPercent / 100);
+    const total = basePrice + tax + storeConfig.defaults.shipping;
 
         return {
             basePrice,

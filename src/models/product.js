@@ -1,4 +1,5 @@
-// backend/src/models/Product.js
+// Produktmodell: normaliserar viktiga fält från WooCommerce-formatet
+// - Exponerar en enkel konstruktör som används i resten av appen
 export class Product {
     constructor(data) {
         this.id = data.id;
@@ -10,6 +11,12 @@ export class Product {
         this.categories = data.categories;
     }
 
+    // Skapar en Product från ett WooCommerce-produktobjekt
+    // Normalisering:
+    // - description: fallback till short_description
+    // - price: parseFloat (WC returnerar ofta sträng)
+    // - image: använder första bildens src eller null
+    // - categories: returnerar en array av slugs
     static fromWooCommerce(wcProduct) {
         return new Product({
             id: wcProduct.id,
