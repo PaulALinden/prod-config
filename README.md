@@ -134,6 +134,24 @@ Att använda modeller ger:
 - `src/models/product.js`, `src/models/category.js` — datamodeller
 - `src/utils/utils.js` — hjälpfunktioner (t.ex. `stripPTags`)
 
+## Testdata / Bulk-import (CSV)
+
+I mappen `src/data/` finns exempel-CSV-filer som du kan använda för att snabbt lägga upp testprodukter i en WooCommerce-installation. Filerna är tänkta som mallar för bulk-import under test:
+
+- `src/data/optik_malmö.csv`
+- `src/data/optik_marbella.csv`
+- `src/data/products.json` (sample JSON-data)
+
+Använd CSV-filerna som utgångspunkt och justera kolumnerna efter din WooCommerce-import (vanliga kolumner: `name`, `sku`, `regular_price`, `categories`, `description`). De här filerna gör det enkelt att fylla butiken med testprodukter vid utveckling.
+
+Viktigt: för att tjänsten ska kunna gruppera och hitta produkter för varje komponent måste din WooCommerce-installation ha tre kategorier (skapa dem om de inte finns):
+
+- glassType — rekommenderad slug: `glass`  (glas-typer)
+- tint — rekommenderad slug: `tint`     (toningar)
+- frame — rekommenderad slug: `frame`   (bågar)
+
+När du importerar CSV:en, se till att kategorikolumnen använder dessa slugs eller namn så att `Product.fromWooCommerce` / filtrering i `woocommerceService` kan matcha produkterna korrekt.
+
 ## Uppladdningar
 
 Uppladdade filer sparas i `uploads/` (mappen ignoreras normalt i git). Se `src/routes/uploadRoutes.js` för validering och lagring.
